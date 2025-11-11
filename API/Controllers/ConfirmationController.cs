@@ -11,14 +11,23 @@ public class ConfirmationController(IConfirmationService service) : ControllerBa
     private readonly IConfirmationService _service = service;
 
     [HttpPost("send-confirmation-email")]
-    public async Task<IActionResult> SendConfirmationEmail(ConfirmationRequest request)
+    public async Task<IActionResult> SendConfirmationEmail([FromBody] ConfirmationRequest request)
     {
         if (!ModelState.IsValid)
             return BadRequest("ModelState not valid");
 
-        var result = await _service.SendConfirmationEmailAsync(request);
-        return result.Succeeded
-            ? Accepted(result)
-            : BadRequest(result);
+        try
+        {
+            await _service.SendConfirmationEmailAsync(request);
+            return Ok("Confirmation email sent successfully.");
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
     }
 }
